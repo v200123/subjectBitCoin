@@ -36,7 +36,7 @@ class GetPriceController {
             val nowPrice = newPriceBean[0].idxPx
             if (mOldPrice.isNotEmpty() && mOldPrice[i] != 0.0) {
                 mIsUp = mOldPrice[i] < nowPrice
-                mReturnString += "当前的${s}价格为：$nowPrice/USDT 相较上一个时段是：${if (mIsUp) "涨" else "跌"},幅度为：${((mOldPrice[i] - nowPrice) / nowPrice) * 100}"
+                mReturnString += "当前的${s}价格为：$nowPrice/USDT 相较上一个时段是：${if (mIsUp) "涨" else "跌"},幅度为：${((mOldPrice[i] - nowPrice) / nowPrice) * 100}%"
             } else
                 mReturnString += "当前的${s}价格为：$nowPrice/USDT"
             mOldPrice[i] = nowPrice
