@@ -4,7 +4,7 @@ class NewPriceBean : ArrayList<NewPriceBeanItem>()
 
 data class NewPriceBeanItem(
     val high24h: String,
-    val idxPx: String,
+    val idxPx: Double,
     val instId: String,
     val low24h: String,
     val open24h: String,

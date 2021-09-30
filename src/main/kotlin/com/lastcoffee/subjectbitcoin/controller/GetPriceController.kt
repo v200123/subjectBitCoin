@@ -15,27 +15,34 @@ import java.util.*
 
 @RestController
 class GetPriceController {
-    val mNeedSeeCoinArray = arrayListOf<String>("MATIC-USDT","SAND-USDT")
-//    @Scheduled(cron = "0 0 8,12,15-22 * *")
+    val mOldPrice = mutableListOf<Double>(0.0, 0.0)
+    val mNeedSeeCoinArray = arrayListOf<String>("MATIC-USDT", "SAND-USDT")
+
+    //    @Scheduled(cron = "0 0 8,12,15-22 * *")
     @RequestMapping("/getPrice")
     fun getPrice(): String {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Chongqing"))
         val nowString = "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH)}" +
                 "-${calendar.get(Calendar.DAY_OF_MONTH)}:${calendar.get(Calendar.HOUR_OF_DAY)}"
-    var mReturnString = "当前时间为:${nowString} \n "
+        var mReturnString = "当前时间为:${nowString} \n "
 
-    var mSeeCoinName = ""
-        mNeedSeeCoinArray.forEach {
-            mSeeCoinName += it.split("-")[0]+","
-            val newPriceBean =  runBlocking(Dispatchers.IO) {
-
-                return@runBlocking getApiServer().getCoinNewPrice(it).data
-
+        var mSeeCoinName = ""
+        var mIsUp = false
+        mNeedSeeCoinArray.forEachIndexed { i: Int, s: String ->
+            mSeeCoinName += s.split("-")[0] + ","
+            val newPriceBean = runBlocking(Dispatchers.IO) {
+                return@runBlocking getApiServer().getCoinNewPrice(s).data
             }
-            mReturnString+="当前的${it}价格为：${newPriceBean[0].idxPx}/USDT"
+            val nowPrice = newPriceBean[0].idxPx
+            if (mOldPrice.isNotEmpty() && mOldPrice[i] != 0.0) {
+                mIsUp = mOldPrice[i] > nowPrice
+                mReturnString += "当前的${s}价格为：$nowPrice/USDT 相较上一个时段是：${if (mIsUp) "涨" else "跌"},幅度为：${((mOldPrice[i] - nowPrice) / nowPrice) * 100}"
+            } else
+                mReturnString += "当前的${s}价格为：$nowPrice/USDT"
+            mOldPrice[i] = nowPrice
         }
         val dropLast = mSeeCoinName.dropLast(1)
-        mSeeCoinName=dropLast+"的实时价格检测"
+        mSeeCoinName = dropLast + "的实时价格检测"
         runBlocking(Dispatchers.IO) {
             val sendNotification = getApiServer().sendNotification(mSeeCoinName, mReturnString)
             println("发送通知的结果：${sendNotification}")
@@ -45,7 +52,7 @@ class GetPriceController {
     }
 
     @GetMapping("/test")
-    fun test():String{
+    fun test(): String {
         return "哈哈哈哈"
     }
 }
