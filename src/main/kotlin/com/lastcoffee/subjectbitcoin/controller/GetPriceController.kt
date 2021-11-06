@@ -1,8 +1,10 @@
 package com.lastcoffee.subjectbitcoin.controller
 
 import com.lastcoffee.subjectbitcoin.bean.NewPriceBean
+import com.lastcoffee.subjectbitcoin.div
 import com.lastcoffee.subjectbitcoin.http.ApiService
 import com.lastcoffee.subjectbitcoin.http.getApiServer
+import com.lastcoffee.subjectbitcoin.toBig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,15 +13,16 @@ import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.math.RoundingMode
 import java.util.*
 
-@RestController
+@Component
+//@RestController
 class GetPriceController {
     val mOldPrice = mutableListOf<Double>(0.0, 0.0)
     val mNeedSeeCoinArray = arrayListOf<String>("MATIC-USDT", "SAND-USDT")
-
-    //    @Scheduled(cron = "0 0 8,12,15-22 * *")
-    @RequestMapping("/getPrice")
+    @Scheduled(cron = "0 0 8,12,15-23 * * *")
+//    @RequestMapping("/getPerice")
     fun getPrice(): String {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Chongqing"))
         val nowString = "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH)}" +
@@ -36,7 +39,10 @@ class GetPriceController {
             val nowPrice = newPriceBean[0].idxPx
             if (mOldPrice.isNotEmpty() && mOldPrice[i] != 0.0) {
                 mIsUp = mOldPrice[i] < nowPrice
-                mReturnString += "当前的${s}价格为：$nowPrice/USDT 相较上一个时段是：${if (mIsUp) "涨" else "跌"},幅度为：${((mOldPrice[i] - nowPrice) / nowPrice) * 100}%"
+
+                val bigDecimal = (((nowPrice.toBig() - mOldPrice[i].toBig())/( nowPrice.toBig()))*( 100.0.toBig()))
+                    .setScale(2, RoundingMode.HALF_UP)
+                mReturnString += "当前的${s}价格为：$nowPrice/USDT 相较上一个时段是：${if (mIsUp) "涨" else "跌"},幅度为：${bigDecimal}%"
             } else
                 mReturnString += "当前的${s}价格为：$nowPrice/USDT"
             mOldPrice[i] = nowPrice
